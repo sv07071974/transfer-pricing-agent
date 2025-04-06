@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  # Backend API service
+  backend:
+    build: ./backend
+    container_name: tp-agent-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./backend:/app
+      - vector_db:/app/vector_db
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-gpt-3.5-turbo}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+    networks:
+      - tp-network
+
+  # Frontend web interface
+  frontend:
+    build: ./frontend
+    container_name: tp-agent-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - tp-network
+
+# Persistent volumes
+volumes:
+  vector_db:
+    driver: local
+
+# Docker networks
+networks:
+  tp-network:
+    driver: bridge
